@@ -2,7 +2,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
-import Header from '../components/Header'
+import { Layout } from '@/components/layout'
 
 import ConvexProvider from '../integrations/convex/provider'
 
@@ -41,8 +41,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ConvexProvider>
-          <Header />
-          {children}
+          <Layout>
+            {children}
+          </Layout>
           <TanStackDevtools
             config={{
               position: 'bottom-right',
