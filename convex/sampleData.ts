@@ -1,11 +1,11 @@
 import { mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { vehiclesAggregate } from "./aggregates";
 
 export const createSampleData = mutation({
   args: {},
   handler: async (ctx) => {
     // Create sample vehicles
-    const vehicle1 = await ctx.db.insert("vehicles", {
+    const vehicle1Id = await ctx.db.insert("vehicles", {
       make: "Toyota",
       model: "Camry",
       year: 2022,
@@ -19,8 +19,10 @@ export const createSampleData = mutation({
       currentOdometer: 15000,
       lastOdometerUpdate: Date.now(),
     });
+    const vehicle1 = await ctx.db.get(vehicle1Id);
+    if (vehicle1) await vehiclesAggregate.insert(ctx, vehicle1);
 
-    const vehicle2 = await ctx.db.insert("vehicles", {
+    const vehicle2Id = await ctx.db.insert("vehicles", {
       make: "Honda",
       model: "Civic",
       year: 2023,
@@ -34,8 +36,10 @@ export const createSampleData = mutation({
       currentOdometer: 8500,
       lastOdometerUpdate: Date.now(),
     });
+    const vehicle2 = await ctx.db.get(vehicle2Id);
+    if (vehicle2) await vehiclesAggregate.insert(ctx, vehicle2);
 
-    const vehicle3 = await ctx.db.insert("vehicles", {
+    const vehicle3Id = await ctx.db.insert("vehicles", {
       make: "Ford",
       model: "Escape",
       year: 2021,
@@ -49,13 +53,15 @@ export const createSampleData = mutation({
       currentOdometer: 32000,
       lastOdometerUpdate: Date.now(),
     });
+    const vehicle3 = await ctx.db.get(vehicle3Id);
+    if (vehicle3) await vehiclesAggregate.insert(ctx, vehicle3);
 
     // Create sample bookings
     const now = Date.now();
     const oneDay = 24 * 60 * 60 * 1000;
-    
+
     await ctx.db.insert("bookings", {
-      vehicleId: vehicle1,
+      vehicleId: vehicle1Id,
       customerName: "John Smith",
       customerEmail: "john@example.com",
       startDate: now - (7 * oneDay),
@@ -66,7 +72,7 @@ export const createSampleData = mutation({
     });
 
     await ctx.db.insert("bookings", {
-      vehicleId: vehicle2,
+      vehicleId: vehicle2Id,
       customerName: "Sarah Johnson",
       customerEmail: "sarah@example.com",
       startDate: now - (2 * oneDay),
@@ -77,7 +83,7 @@ export const createSampleData = mutation({
     });
 
     await ctx.db.insert("bookings", {
-      vehicleId: vehicle1,
+      vehicleId: vehicle1Id,
       customerName: "Mike Davis",
       customerEmail: "mike@example.com",
       startDate: now + (5 * oneDay),
@@ -89,7 +95,7 @@ export const createSampleData = mutation({
 
     // Create sample maintenance records
     await ctx.db.insert("maintenance", {
-      vehicleId: vehicle1,
+      vehicleId: vehicle1Id,
       date: now - (30 * oneDay),
       type: "Oil Change",
       description: "Regular oil change and filter replacement",
@@ -100,7 +106,7 @@ export const createSampleData = mutation({
     });
 
     await ctx.db.insert("maintenance", {
-      vehicleId: vehicle2,
+      vehicleId: vehicle2Id,
       date: now - (15 * oneDay),
       type: "Tire Rotation",
       description: "Rotated tires and checked alignment",
@@ -111,7 +117,7 @@ export const createSampleData = mutation({
     });
 
     await ctx.db.insert("maintenance", {
-      vehicleId: vehicle3,
+      vehicleId: vehicle3Id,
       date: now - (5 * oneDay),
       type: "Brake Repair",
       description: "Replaced brake pads and rotors",

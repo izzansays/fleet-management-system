@@ -1,5 +1,5 @@
 import { query } from "./_generated/server";
-import { bookingsAggregate, maintenanceAggregate } from "./aggregates";
+import { bookingsAggregate, maintenanceAggregate, vehiclesAggregate } from "./aggregates";
 
 // Individual query for Total Revenue metric
 export const getTotalRevenue = query({
@@ -44,11 +44,15 @@ export const getFleetUtilization = query({
     const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = now - (60 * 24 * 60 * 60 * 1000);
 
-    // Get all bookings for utilization calculation
-    const allBookings = await ctx.db.query("bookings").collect();
+    // Get bookings for current period using indexed query
+    const currentBookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_start_date")
+      .filter((q) => q.lte(q.field("startDate"), now))
+      .collect();
 
-    // Calculate rental days for current period
-    const currentRentalDays = allBookings
+    // Filter for bookings that overlap with current period
+    const currentRentalDays = currentBookings
       .filter((b) => b.endDate >= thirtyDaysAgo && b.startDate <= now)
       .reduce((sum, booking) => {
         const bookingStart = Math.max(booking.startDate, thirtyDaysAgo);
@@ -57,8 +61,15 @@ export const getFleetUtilization = query({
         return sum + days;
       }, 0);
 
-    // Calculate rental days for previous period
-    const previousRentalDays = allBookings
+    // Get bookings for previous period using indexed query
+    const previousBookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_start_date")
+      .filter((q) => q.lte(q.field("startDate"), thirtyDaysAgo))
+      .collect();
+
+    // Filter for bookings that overlap with previous period
+    const previousRentalDays = previousBookings
       .filter((b) => b.endDate >= sixtyDaysAgo && b.startDate < thirtyDaysAgo)
       .reduce((sum, booking) => {
         const bookingStart = Math.max(booking.startDate, sixtyDaysAgo);
@@ -67,9 +78,8 @@ export const getFleetUtilization = query({
         return sum + days;
       }, 0);
 
-    // Get vehicle count
-    const vehicles = await ctx.db.query("vehicles").collect();
-    const vehicleCount = vehicles.length || 1; // Avoid division by zero
+    // Get vehicle count from aggregate
+    const vehicleCount = await vehiclesAggregate.count(ctx) || 1; // Avoid division by zero
 
     const totalPossibleDays = 30 * vehicleCount;
     const current = totalPossibleDays > 0 ? (currentRentalDays / totalPossibleDays) * 100 : 0;
@@ -176,9 +186,8 @@ export const getNetProfit = query({
       },
     });
 
-    // Get total acquisition costs (amortized monthly)
-    const vehicles = await ctx.db.query("vehicles").collect();
-    const totalAcquisitionCost = vehicles.reduce((sum, v) => sum + v.acquisitionCost, 0);
+    // Get total acquisition costs from aggregate (amortized monthly)
+    const totalAcquisitionCost = await vehiclesAggregate.sum(ctx) ?? 0;
     const monthlyAcquisitionCost = totalAcquisitionCost / 12; // Amortize over 1 year
 
     const currentRevenueVal = currentRevenue ?? 0;
@@ -236,30 +245,42 @@ export const getDashboardCardMetrics = query({
     const previousMaintenanceCosts = await maintenanceAggregate.sum(ctx, {
       bounds: { lower: { key: sixtyDaysAgo, inclusive: true }, upper: { key: thirtyDaysAgo, inclusive: false } },
     });
-    const vehicles = await ctx.db.query("vehicles").collect();
-    const monthlyAcquisitionCost = vehicles.reduce((sum, v) => sum + v.acquisitionCost, 0) / 12;
+    const totalAcquisitionCost = await vehiclesAggregate.sum(ctx) ?? 0;
+    const monthlyAcquisitionCost = totalAcquisitionCost / 12;
     const profitCurrent = (currentRevenue ?? 0) - (currentMaintenanceCosts ?? 0) - monthlyAcquisitionCost;
     const profitPrevious = (previousRevenue ?? 0) - (previousMaintenanceCosts ?? 0) - monthlyAcquisitionCost;
     const profitTrend = profitPrevious !== 0 ? parseFloat((((profitCurrent - profitPrevious) / Math.abs(profitPrevious)) * 100).toFixed(1)) : 0;
     const profitMargin = (currentRevenue ?? 0) > 0 ? (profitCurrent / (currentRevenue ?? 0)) * 100 : 0;
 
-    // Get Fleet Utilization
-    const allBookings = await ctx.db.query("bookings").collect();
-    const currentRentalDays = allBookings
+    // Get Fleet Utilization - Get bookings for current period using indexed query
+    const currentUtilBookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_start_date")
+      .filter((q) => q.lte(q.field("startDate"), now))
+      .collect();
+    const currentRentalDays = currentUtilBookings
       .filter((b) => b.endDate >= thirtyDaysAgo && b.startDate <= now)
       .reduce((sum, booking) => {
         const bookingStart = Math.max(booking.startDate, thirtyDaysAgo);
         const bookingEnd = Math.min(booking.endDate, now);
         return sum + Math.max(0, Math.ceil((bookingEnd - bookingStart) / (1000 * 60 * 60 * 24)));
       }, 0);
-    const previousRentalDays = allBookings
+
+    // Get bookings for previous period using indexed query
+    const previousUtilBookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_start_date")
+      .filter((q) => q.lte(q.field("startDate"), thirtyDaysAgo))
+      .collect();
+    const previousRentalDays = previousUtilBookings
       .filter((b) => b.endDate >= sixtyDaysAgo && b.startDate < thirtyDaysAgo)
       .reduce((sum, booking) => {
         const bookingStart = Math.max(booking.startDate, sixtyDaysAgo);
         const bookingEnd = Math.min(booking.endDate, thirtyDaysAgo);
         return sum + Math.max(0, Math.ceil((bookingEnd - bookingStart) / (1000 * 60 * 60 * 24)));
       }, 0);
-    const totalPossibleDays = 30 * (vehicles.length || 1);
+    const vehicleCount = await vehiclesAggregate.count(ctx) || 1;
+    const totalPossibleDays = 30 * vehicleCount;
     const utilizationCurrent = (currentRentalDays / totalPossibleDays) * 100;
     const utilizationPrevious = (previousRentalDays / totalPossibleDays) * 100;
     const utilizationTrend = parseFloat((utilizationCurrent - utilizationPrevious).toFixed(1));
@@ -321,9 +342,9 @@ export const getOverviewMetrics = query({
     
     // Calculate total revenue
     const totalRevenue = completedBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
-    
+
     // Calculate total costs (acquisition + maintenance)
-    const totalAcquisitionCosts = vehicles.reduce((sum, vehicle) => sum + vehicle.acquisitionCost, 0);
+    const totalAcquisitionCosts = await vehiclesAggregate.sum(ctx) ?? 0;
     const totalMaintenanceCosts = maintenanceRecords.reduce((sum, record) => sum + record.cost, 0);
     const totalCosts = totalAcquisitionCosts + totalMaintenanceCosts;
     

@@ -1,4 +1,4 @@
-import { TableAggregate, DirectAggregate } from "@convex-dev/aggregate";
+import { TableAggregate } from "@convex-dev/aggregate";
 import { components } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
 
@@ -23,13 +23,16 @@ export const maintenanceAggregate = new TableAggregate<{
   sumValue: (doc) => doc.cost,
 });
 
-// DirectAggregate for vehicle metrics (fleet size, acquisition costs)
-// These are computed/snapshot values, not raw table data
-export const vehiclesMetrics = new DirectAggregate<{
-  Namespace: "fleetMetrics";
-  Key: "vehicleCount" | "acquisitionCost";
-  Id: string;
-}>(components.vehiclesAggregate);
+// Aggregate vehicles by creation time (using any timestamp field)
+// This allows efficient count() and sum() operations for vehicle metrics
+export const vehiclesAggregate = new TableAggregate<{
+  Key: number; // Using lastLocationUpdate as sortKey
+  DataModel: DataModel;
+  TableName: "vehicles";
+}>(components.vehiclesAggregate, {
+  sortKey: (doc) => doc.lastLocationUpdate,
+  sumValue: (doc) => doc.acquisitionCost,
+});
 
 // Helper to determine which time period a timestamp falls into
 export function getTimePeriod(timestamp: number): "last30days" | "previous30days" | null {

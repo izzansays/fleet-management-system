@@ -88,3 +88,44 @@ export const updateStatus = mutation({
     await bookingsAggregate.replace(ctx, oldBooking, newBooking);
   },
 });
+
+export const getDailyRevenue = query({
+  args: {
+    days: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const daysToQuery = args.days ?? 90; // Default to 90 days (3 months)
+    const now = Date.now();
+    const startDate = now - (daysToQuery * 24 * 60 * 60 * 1000);
+
+    // Query all bookings within the date range
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_start_date")
+      .filter((q) => q.gte(q.field("endDate"), startDate))
+      .collect();
+
+    // Group bookings by day and sum revenue
+    const dailyRevenueMap = new Map<string, number>();
+
+    for (const booking of bookings) {
+      if (booking.status === "cancelled") continue;
+
+      const date = new Date(booking.endDate);
+      const dateKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+
+      const currentRevenue = dailyRevenueMap.get(dateKey) ?? 0;
+      dailyRevenueMap.set(dateKey, currentRevenue + booking.totalAmount);
+    }
+
+    // Convert to array and sort by date
+    const dailyRevenue = Array.from(dailyRevenueMap.entries())
+      .map(([date, revenue]) => ({
+        date,
+        revenue,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return dailyRevenue;
+  },
+});

@@ -1,5 +1,5 @@
 import { type Icon } from "@tabler/icons-react"
-import { useLocation } from "@tanstack/react-router"
+import { Link, useLocation } from "@tanstack/react-router"
 
 import {
   SidebarGroup,
@@ -48,10 +48,10 @@ export function NavMain({
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton tooltip={item.title} isActive={isActive} asChild>
-                  <a href={item.url}>
+                  <Link to={item.url} preload="intent">
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )
