@@ -432,3 +432,110 @@ export const getVehicleProfitabilityList = query({
     return profitabilityData.sort((a, b) => b.netProfit - a.netProfit);
   },
 });
+
+export const getRevenuePerDayAnalysis = query({
+  args: {},
+  handler: async (ctx) => {
+    const vehicles = await ctx.db.query("vehicles").collect();
+    
+    const revenuePerDayData = await Promise.all(
+      vehicles.map(async (vehicle) => {
+        const bookings = await ctx.db
+          .query("bookings")
+          .withIndex("by_vehicle", (q) => q.eq("vehicleId", vehicle._id))
+          .filter((q) => q.eq(q.field("status"), "completed"))
+          .collect();
+        
+        const totalRevenue = bookings.reduce((sum, b) => sum + b.totalAmount, 0);
+        const daysSinceAcquisition = Math.max(1, Math.ceil((Date.now() - vehicle._creationTime) / (1000 * 60 * 60 * 24)));
+        const revenuePerDay = totalRevenue / daysSinceAcquisition;
+        
+        // Calculate total rental days
+        const totalRentalDays = bookings.reduce((sum, b) => {
+          const days = Math.ceil((b.endDate - b.startDate) / (1000 * 60 * 60 * 24));
+          return sum + days;
+        }, 0);
+        
+        const utilizationRate = (totalRentalDays / daysSinceAcquisition) * 100;
+        
+        return {
+          vehicleId: vehicle._id,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          licensePlate: vehicle.licensePlate,
+          revenuePerDay,
+          totalRevenue,
+          daysSinceAcquisition,
+          totalRentalDays,
+          utilizationRate,
+        };
+      })
+    );
+    
+    return revenuePerDayData.sort((a, b) => b.revenuePerDay - a.revenuePerDay);
+  },
+});
+
+export const getBreakEvenAnalysis = query({
+  args: {},
+  handler: async (ctx) => {
+    const vehicles = await ctx.db.query("vehicles").collect();
+    
+    const breakEvenData = await Promise.all(
+      vehicles.map(async (vehicle) => {
+        const completedBookings = await ctx.db
+          .query("bookings")
+          .withIndex("by_vehicle", (q) => q.eq("vehicleId", vehicle._id))
+          .filter((q) => q.eq(q.field("status"), "completed"))
+          .collect();
+
+        const maintenanceRecords = await ctx.db
+          .query("maintenance")
+          .withIndex("by_vehicle", (q) => q.eq("vehicleId", vehicle._id))
+          .collect();
+
+        const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+        const totalMaintenanceCosts = maintenanceRecords.reduce((sum, m) => sum + m.cost, 0);
+        const netRevenue = totalRevenue - totalMaintenanceCosts;
+        
+        // Calculate days since acquisition
+        const daysSinceAcquisition = Math.max(1, Math.ceil((Date.now() - vehicle._creationTime) / (1000 * 60 * 60 * 24)));
+        
+        // Calculate break-even metrics
+        const hasReachedBreakEven = netRevenue >= vehicle.acquisitionCost;
+        const breakEvenProgress = vehicle.acquisitionCost > 0 ? (netRevenue / vehicle.acquisitionCost) * 100 : 0;
+        
+        // Calculate projected days to break-even based on current daily net revenue
+        const dailyNetRevenue = netRevenue / daysSinceAcquisition;
+        const projectedDaysToBreakEven = dailyNetRevenue > 0 && !hasReachedBreakEven
+          ? Math.ceil((vehicle.acquisitionCost - netRevenue) / dailyNetRevenue)
+          : null;
+        
+        return {
+          vehicleId: vehicle._id,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          licensePlate: vehicle.licensePlate,
+          acquisitionCost: vehicle.acquisitionCost,
+          totalRevenue,
+          totalMaintenanceCosts,
+          netRevenue,
+          daysSinceAcquisition,
+          hasReachedBreakEven,
+          breakEvenProgress: Math.min(breakEvenProgress, 100),
+          projectedDaysToBreakEven,
+          dailyNetRevenue,
+        };
+      })
+    );
+    
+    // Sort by break-even progress (closest to break-even first for those not yet reached)
+    return breakEvenData.sort((a, b) => {
+      if (a.hasReachedBreakEven && !b.hasReachedBreakEven) return -1;
+      if (!a.hasReachedBreakEven && b.hasReachedBreakEven) return 1;
+      return b.breakEvenProgress - a.breakEvenProgress;
+    });
+  },
+});

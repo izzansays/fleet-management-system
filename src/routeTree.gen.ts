@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as BookingsRouteImport } from './routes/bookings'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VehiclesRoute = VehiclesRouteImport.update({
@@ -29,6 +30,11 @@ const BookingsRoute = BookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/bookings': typeof BookingsRoute
   '/maintenance': typeof MaintenanceRoute
   '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/bookings': typeof BookingsRoute
   '/maintenance': typeof MaintenanceRoute
   '/vehicles': typeof VehiclesRoute
@@ -50,20 +58,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/bookings': typeof BookingsRoute
   '/maintenance': typeof MaintenanceRoute
   '/vehicles': typeof VehiclesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bookings' | '/maintenance' | '/vehicles'
+  fullPaths: '/' | '/analytics' | '/bookings' | '/maintenance' | '/vehicles'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bookings' | '/maintenance' | '/vehicles'
-  id: '__root__' | '/' | '/bookings' | '/maintenance' | '/vehicles'
+  to: '/' | '/analytics' | '/bookings' | '/maintenance' | '/vehicles'
+  id:
+    | '__root__'
+    | '/'
+    | '/analytics'
+    | '/bookings'
+    | '/maintenance'
+    | '/vehicles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   BookingsRoute: typeof BookingsRoute
   MaintenanceRoute: typeof MaintenanceRoute
   VehiclesRoute: typeof VehiclesRoute
@@ -92,6 +108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   BookingsRoute: BookingsRoute,
   MaintenanceRoute: MaintenanceRoute,
   VehiclesRoute: VehiclesRoute,

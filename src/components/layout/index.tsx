@@ -1,14 +1,16 @@
-import * as React from "react"
 import {
   IconBolt,
   IconCalendar,
   IconCar,
+  IconChartBar,
   IconDashboard,
   IconTool,
 } from "@tabler/icons-react"
+import * as React from "react"
 
 import { NavMain } from "@/components/layout/nav-main"
 import { NavUser } from "@/components/layout/nav-user"
+import { Separator } from "@/components/ui/separator"
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +22,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
 
 const data = {
   user: {
@@ -48,6 +49,11 @@ const data = {
       title: "Maintenance",
       url: "/maintenance",
       icon: IconTool,
+    },
+    {
+      title: "Analytics",
+      url: "/analytics",
+      icon: IconChartBar,
     },
   ],
 }
