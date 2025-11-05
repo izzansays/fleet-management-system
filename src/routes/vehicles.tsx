@@ -1,14 +1,15 @@
-import { useMemo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import { CrudDataGrid, FilterConfig } from '@/components/ui/crud-data-grid';
+import { MapPin } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { CrudDataGrid, type FilterConfig } from '@/components/ui/crud-data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridTableRowSelect, DataGridTableRowSelectAll } from '@/components/ui/data-grid-table';
-import { Badge } from '@/components/ui/badge';
-import { ColumnDef } from '@tanstack/react-table';
-import { MapPin } from 'lucide-react';
-import { Id } from '../../convex/_generated/dataModel';
+import { VehicleDetailsSheet } from '@/components/vehicle-details-sheet';
+import { api } from '../../convex/_generated/api';
+import type { Id } from '../../convex/_generated/dataModel';
 
 export const Route = createFileRoute('/vehicles')({
   component: VehiclesPage,
@@ -37,6 +38,8 @@ type VehicleWithId = Vehicle & { id: string };
 
 function VehiclesPage() {
   const vehiclesData = useQuery(api.vehicles.list);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<Id<'vehicles'> | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // Transform data to include string id
   const vehicles: VehicleWithId[] = useMemo(() => {
@@ -46,6 +49,12 @@ function VehiclesPage() {
       id: vehicle._id,
     }));
   }, [vehiclesData]);
+
+  // Handle row click
+  const handleRowClick = (vehicle: VehicleWithId) => {
+    setSelectedVehicleId(vehicle._id);
+    setIsSheetOpen(true);
+  };
 
   // Get unique makes for filter
   const uniqueMakes = useMemo(() => {
@@ -62,13 +71,11 @@ function VehiclesPage() {
         cell: ({ row }) => <DataGridTableRowSelect row={row} />,
         enableSorting: false,
         size: 35,
-        enableResizing: false,
-        enableHiding: false,
       },
       {
         accessorKey: 'make',
         id: 'vehicle',
-        header: ({ column }) => <DataGridColumnHeader title="Vehicle" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Vehicle" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="space-y-px">
@@ -81,13 +88,11 @@ function VehiclesPage() {
         },
         size: 200,
         enableSorting: true,
-        enableHiding: false,
-        enableResizing: true,
       },
       {
         accessorKey: 'licensePlate',
         id: 'licensePlate',
-        header: ({ column }) => <DataGridColumnHeader title="License Plate" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="License Plate" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="font-mono text-foreground font-medium">{row.original.licensePlate}</div>
@@ -95,13 +100,11 @@ function VehiclesPage() {
         },
         size: 150,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'status',
         id: 'status',
-        header: ({ column }) => <DataGridColumnHeader title="Status" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Status" column={column} />,
         cell: ({ row }) => {
           const status = row.original.status;
           const statusConfig = {
@@ -120,13 +123,11 @@ function VehiclesPage() {
         },
         size: 120,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'currentLatitude',
         id: 'location',
-        header: ({ column }) => <DataGridColumnHeader title="Current Location" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Current Location" column={column} />,
         cell: ({ row }) => {
           const lat = row.original.currentLatitude.toFixed(4);
           const lng = row.original.currentLongitude.toFixed(4);
@@ -146,13 +147,11 @@ function VehiclesPage() {
         },
         size: 220,
         enableSorting: false,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'currentOdometer',
         id: 'odometer',
-        header: ({ column }) => <DataGridColumnHeader title="Odometer" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Odometer" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="text-foreground">
@@ -162,8 +161,6 @@ function VehiclesPage() {
         },
         size: 120,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
     ],
     [],
@@ -214,6 +211,13 @@ function VehiclesPage() {
         pageSize={10}
         initialSorting={[{ id: 'vehicle', desc: false }]}
         isLoading={vehiclesData === undefined}
+        onRowClick={handleRowClick}
+      />
+
+      <VehicleDetailsSheet
+        vehicleId={selectedVehicleId}
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
       />
     </>
   );

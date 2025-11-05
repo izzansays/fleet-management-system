@@ -66,10 +66,6 @@ export interface DataGridProps<TData extends object> {
     headerBorder?: boolean;
     headerSticky?: boolean;
     width?: 'auto' | 'fixed';
-    columnsVisibility?: boolean;
-    columnsResizable?: boolean;
-    columnsPinnable?: boolean;
-    columnsMovable?: boolean;
     columnsDraggable?: boolean;
     rowsDraggable?: boolean;
   };
@@ -130,10 +126,6 @@ function DataGrid<TData extends object>({ children, table, ...props }: DataGridP
       headerBackground: true,
       headerBorder: true,
       width: 'fixed',
-      columnsVisibility: false,
-      columnsResizable: false,
-      columnsPinnable: false,
-      columnsMovable: false,
       columnsDraggable: false,
       rowsDraggable: false,
     },

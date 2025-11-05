@@ -115,3 +115,92 @@ export const getVehicleProfitability = query({
     };
   },
 });
+
+export const getVehicleDetails = query({
+  args: { vehicleId: v.id("vehicles") },
+  handler: async (ctx, args) => {
+    const vehicle = await ctx.db.get(args.vehicleId);
+    if (!vehicle) return null;
+
+    // Get all bookings for this vehicle
+    const allBookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_vehicle", (q) => q.eq("vehicleId", args.vehicleId))
+      .order("desc")
+      .collect();
+
+    // Get completed bookings for financial calculations
+    const completedBookings = allBookings.filter((b) => b.status === "completed");
+
+    // Get last 5 bookings
+    const recentBookings = allBookings.slice(0, 5);
+
+    // Calculate booking statistics
+    const totalRevenue = completedBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
+    const totalBookingDays = completedBookings.reduce((sum, booking) => {
+      const days = Math.ceil((booking.endDate - booking.startDate) / (1000 * 60 * 60 * 24));
+      return sum + days;
+    }, 0);
+    const avgBookingDuration = completedBookings.length > 0 ? totalBookingDays / completedBookings.length : 0;
+    const avgDailyRate = completedBookings.length > 0 ? completedBookings.reduce((sum, b) => sum + b.dailyRate, 0) / completedBookings.length : 0;
+    const avgRevenuePerBooking = completedBookings.length > 0 ? totalRevenue / completedBookings.length : 0;
+
+    // Get all maintenance records for this vehicle
+    const allMaintenance = await ctx.db
+      .query("maintenance")
+      .withIndex("by_vehicle", (q) => q.eq("vehicleId", args.vehicleId))
+      .order("desc")
+      .collect();
+
+    // Get last 5 maintenance records
+    const recentMaintenance = allMaintenance.slice(0, 5);
+
+    // Calculate maintenance statistics
+    const totalMaintenanceCost = allMaintenance.reduce((sum, record) => sum + record.cost, 0);
+
+    // Get upcoming service alerts for this vehicle
+    const now = Date.now();
+    const thirtyDaysFromNow = now + (30 * 24 * 60 * 60 * 1000);
+    
+    const upcomingServiceAlerts = allMaintenance.filter((record) => {
+      if (record.nextServiceDue && record.nextServiceDue >= now && record.nextServiceDue <= thirtyDaysFromNow) {
+        return true;
+      }
+      if (record.nextServiceMileage && vehicle.currentOdometer) {
+        const mileageUntilService = record.nextServiceMileage - vehicle.currentOdometer;
+        if (mileageUntilService <= 1000 && mileageUntilService > 0) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    // Calculate financial metrics
+    const netProfit = totalRevenue - vehicle.acquisitionCost - totalMaintenanceCost;
+    const roi = vehicle.acquisitionCost > 0 ? (netProfit / vehicle.acquisitionCost) * 100 : 0;
+
+    return {
+      vehicle,
+      financial: {
+        acquisitionCost: vehicle.acquisitionCost,
+        totalRevenue,
+        totalMaintenanceCost,
+        netProfit,
+        roi,
+      },
+      bookingHistory: {
+        recentBookings,
+        totalBookings: allBookings.length,
+        completedBookings: completedBookings.length,
+        avgBookingDuration,
+        avgDailyRate,
+        avgRevenuePerBooking,
+      },
+      maintenanceHistory: {
+        recentMaintenance,
+        totalMaintenanceRecords: allMaintenance.length,
+        upcomingServiceAlerts,
+      },
+    };
+  },
+});

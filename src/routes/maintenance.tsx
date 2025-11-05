@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
+import { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { Plus, Wrench } from 'lucide-react';
+import { useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { CrudDataGrid, FilterConfig } from '@/components/ui/crud-data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridTableRowSelect, DataGridTableRowSelectAll } from '@/components/ui/data-grid-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ColumnDef } from '@tanstack/react-table';
-import { Plus, Wrench } from 'lucide-react';
+import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
 
 export const Route = createFileRoute('/maintenance')({
@@ -78,13 +78,11 @@ function MaintenancePage() {
         cell: ({ row }) => <DataGridTableRowSelect row={row} />,
         enableSorting: false,
         size: 35,
-        enableResizing: false,
-        enableHiding: false,
       },
       {
         accessorKey: 'vehicleId',
         id: 'vehicle',
-        header: ({ column }) => <DataGridColumnHeader title="Vehicle" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Vehicle" column={column} />,
         cell: ({ row }) => {
           const vehicle = row.original.vehicle;
           if (!vehicle) {
@@ -103,13 +101,11 @@ function MaintenancePage() {
         },
         size: 200,
         enableSorting: false,
-        enableHiding: false,
-        enableResizing: true,
       },
       {
         accessorKey: 'date',
         id: 'date',
-        header: ({ column }) => <DataGridColumnHeader title="Date" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Date" column={column} />,
         cell: ({ row }) => {
           const date = new Date(row.original.date).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -123,13 +119,11 @@ function MaintenancePage() {
         },
         size: 130,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'type',
         id: 'type',
-        header: ({ column }) => <DataGridColumnHeader title="Type" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Type" column={column} />,
         cell: ({ row }) => {
           const type = row.original.type;
           
@@ -142,13 +136,11 @@ function MaintenancePage() {
         },
         size: 150,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'description',
         id: 'description',
-        header: ({ column }) => <DataGridColumnHeader title="Description" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Description" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="text-foreground max-w-md truncate">
@@ -158,13 +150,11 @@ function MaintenancePage() {
         },
         size: 300,
         enableSorting: false,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'cost',
         id: 'cost',
-        header: ({ column }) => <DataGridColumnHeader title="Cost" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Cost" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="text-foreground font-semibold">
@@ -174,13 +164,11 @@ function MaintenancePage() {
         },
         size: 120,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'odometerAtService',
         id: 'odometer',
-        header: ({ column }) => <DataGridColumnHeader title="Odometer Reading" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Odometer Reading" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="text-foreground">
@@ -190,8 +178,6 @@ function MaintenancePage() {
         },
         size: 150,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
     ],
     [],

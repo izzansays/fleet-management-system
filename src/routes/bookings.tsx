@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
+import { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { Plus } from 'lucide-react';
+import { useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { CrudDataGrid, FilterConfig } from '@/components/ui/crud-data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridTableRowSelect, DataGridTableRowSelectAll } from '@/components/ui/data-grid-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ColumnDef } from '@tanstack/react-table';
-import { Plus } from 'lucide-react';
+import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
 
 export const Route = createFileRoute('/bookings')({
@@ -78,13 +78,11 @@ function BookingsPage() {
         cell: ({ row }) => <DataGridTableRowSelect row={row} />,
         enableSorting: false,
         size: 35,
-        enableResizing: false,
-        enableHiding: false,
       },
       {
         accessorKey: 'customerName',
         id: 'customer',
-        header: ({ column }) => <DataGridColumnHeader title="Customer" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Customer" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="space-y-px">
@@ -95,13 +93,11 @@ function BookingsPage() {
         },
         size: 220,
         enableSorting: true,
-        enableHiding: false,
-        enableResizing: true,
       },
       {
         accessorKey: 'vehicleId',
         id: 'vehicle',
-        header: ({ column }) => <DataGridColumnHeader title="Vehicle" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Vehicle" column={column} />,
         cell: ({ row }) => {
           const vehicle = row.original.vehicle;
           if (!vehicle) {
@@ -120,13 +116,11 @@ function BookingsPage() {
         },
         size: 200,
         enableSorting: false,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'startDate',
         id: 'dates',
-        header: ({ column }) => <DataGridColumnHeader title="Dates" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Dates" column={column} />,
         cell: ({ row }) => {
           const startDate = new Date(row.original.startDate).toLocaleString();
           const endDate = new Date(row.original.endDate).toLocaleString();
@@ -140,13 +134,11 @@ function BookingsPage() {
         },
         size: 180,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'duration',
         id: 'duration',
-        header: ({ column }) => <DataGridColumnHeader title="Duration" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Duration" column={column} />,
         cell: ({ row }) => {
           const days = Math.ceil(
             (row.original.endDate - row.original.startDate) / (1000 * 60 * 60 * 24)
@@ -159,13 +151,11 @@ function BookingsPage() {
         },
         size: 100,
         enableSorting: false,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'status',
         id: 'status',
-        header: ({ column }) => <DataGridColumnHeader title="Status" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Status" column={column} />,
         cell: ({ row }) => {
           const status = row.original.status;
           const statusConfig = {
@@ -184,13 +174,11 @@ function BookingsPage() {
         },
         size: 120,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'dailyRate',
         id: 'dailyRate',
-        header: ({ column }) => <DataGridColumnHeader title="Daily Rate" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Daily Rate" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="text-foreground font-medium">
@@ -200,13 +188,11 @@ function BookingsPage() {
         },
         size: 120,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
       {
         accessorKey: 'totalAmount',
         id: 'total',
-        header: ({ column }) => <DataGridColumnHeader title="Total" visibility={true} column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Total" column={column} />,
         cell: ({ row }) => {
           return (
             <div className="text-foreground font-semibold">
@@ -216,8 +202,6 @@ function BookingsPage() {
         },
         size: 120,
         enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
       },
     ],
     [],
