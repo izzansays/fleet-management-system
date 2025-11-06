@@ -10,6 +10,15 @@ const applicationTables = {
     licensePlate: v.string(),
     vin: v.string(),
     acquisitionCost: v.number(),
+    category: 
+      v.union(
+        v.literal("Economy Cars"),
+        v.literal("Mid-size SUVs"),
+        v.literal("Luxury Sedans"),
+        v.literal("Large SUVs"),
+        v.literal("Trucks")
+      )
+    ,
     status: v.union(
       v.literal("available"),
       v.literal("reserved"),
@@ -23,7 +32,8 @@ const applicationTables = {
     lastOdometerUpdate: v.number(),
   })
     .index("by_status", ["status"])
-    .index("by_license_plate", ["licensePlate"]),
+    .index("by_license_plate", ["licensePlate"])
+    .index("by_category", ["category"]),
 
   vehicleLocationHistory: defineTable({
     vehicleId: v.id("vehicles"),

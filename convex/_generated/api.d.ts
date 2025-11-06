@@ -15,7 +15,6 @@ import type * as dashboard from "../dashboard.js";
 import type * as http from "../http.js";
 import type * as maintenance from "../maintenance.js";
 import type * as router from "../router.js";
-import type * as sampleData from "../sampleData.js";
 import type * as seed from "../seed.js";
 import type * as vehicles from "../vehicles.js";
 
@@ -41,7 +40,6 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   maintenance: typeof maintenance;
   router: typeof router;
-  sampleData: typeof sampleData;
   seed: typeof seed;
   vehicles: typeof vehicles;
 }>;

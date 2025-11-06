@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { bookingsAggregate } from "./aggregates";
+import { bookingsAggregate, maintenanceAggregate, vehiclesAggregate } from "./aggregates";
 
 export const list = query({
   args: {},
@@ -22,70 +22,37 @@ export const list = query({
   },
 });
 
-export const create = mutation({
-  args: {
-    vehicleId: v.id("vehicles"),
-    customerName: v.string(),
-    customerEmail: v.string(),
-    startDate: v.number(),
-    endDate: v.number(),
-    dailyRate: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const days = Math.ceil((args.endDate - args.startDate) / (1000 * 60 * 60 * 24));
-    const totalAmount = days * args.dailyRate;
+export const backfillAggregates = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Clear all aggregates first to prevent duplicates
+    await bookingsAggregate.clear(ctx);
+    await maintenanceAggregate.clear(ctx);
+    await vehiclesAggregate.clear(ctx);
 
-    const bookingId = await ctx.db.insert("bookings", {
-      ...args,
-      totalAmount,
-      status: "confirmed",
-    });
-
-    // Update vehicle status to reserved
-    await ctx.db.patch(args.vehicleId, {
-      status: "reserved",
-    });
-
-    // Update bookings aggregate
-    const booking = await ctx.db.get(bookingId);
-    if (booking) {
+    // Get all bookings and insert into bookings aggregate
+    const bookings = await ctx.db.query("bookings").collect();
+    for (const booking of bookings) {
       await bookingsAggregate.insert(ctx, booking);
     }
 
-    return bookingId;
-  },
-});
-
-export const updateStatus = mutation({
-  args: {
-    bookingId: v.id("bookings"),
-    status: v.union(
-      v.literal("confirmed"),
-      v.literal("active"),
-      v.literal("completed"),
-      v.literal("cancelled")
-    ),
-  },
-  handler: async (ctx, args) => {
-    const oldBooking = await ctx.db.get(args.bookingId);
-    if (!oldBooking) throw new Error("Booking not found");
-
-    await ctx.db.patch(args.bookingId, {
-      status: args.status,
-    });
-
-    const newBooking = await ctx.db.get(args.bookingId);
-    if (!newBooking) throw new Error("Booking not found after update");
-
-    // Update vehicle status based on booking status
-    if (args.status === "active") {
-      await ctx.db.patch(oldBooking.vehicleId, { status: "in-use" });
-    } else if (args.status === "completed" || args.status === "cancelled") {
-      await ctx.db.patch(oldBooking.vehicleId, { status: "available" });
+    // Get all maintenance records and insert into maintenance aggregate
+    const maintenanceRecords = await ctx.db.query("maintenance").collect();
+    for (const record of maintenanceRecords) {
+      await maintenanceAggregate.insert(ctx, record);
     }
 
-    // Update bookings aggregate
-    await bookingsAggregate.replace(ctx, oldBooking, newBooking);
+    // Get all vehicles and insert into vehicles aggregate
+    const vehicles = await ctx.db.query("vehicles").collect();
+    for (const vehicle of vehicles) {
+      await vehiclesAggregate.insert(ctx, vehicle);
+    }
+
+    return {
+      bookingsCount: bookings.length,
+      maintenanceCount: maintenanceRecords.length,
+      vehiclesCount: vehicles.length,
+    };
   },
 });
 

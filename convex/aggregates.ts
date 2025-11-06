@@ -2,14 +2,15 @@ import { TableAggregate } from "@convex-dev/aggregate";
 import { components } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
 
-// Aggregate bookings by endDate for revenue calculations
+// Aggregate bookings by [status, endDate] for revenue calculations
 // This tracks totalAmount over time for revenue metrics
+// Using composite key allows filtering by status (e.g., only "completed" bookings)
 export const bookingsAggregate = new TableAggregate<{
-  Key: number; // endDate timestamp for time-based queries
+  Key: [string, number]; // [status, endDate] tuple for grouped queries
   DataModel: DataModel;
   TableName: "bookings";
 }>(components.bookingsAggregate, {
-  sortKey: (doc) => doc.endDate,
+  sortKey: (doc) => [doc.status, doc.endDate],
   sumValue: (doc) => doc.totalAmount,
 });
 

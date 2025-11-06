@@ -5,35 +5,35 @@ import { Id } from "./_generated/dataModel"
 // Vehicle models with realistic pricing
 const vehicleModels = [
   // Economy Cars
-  { make: "Toyota", model: "Corolla", year: 2023, type: "Sedan", dailyRate: 45, acquisitionCost: 25000 },
-  { make: "Toyota", model: "Corolla", year: 2023, type: "Sedan", dailyRate: 45, acquisitionCost: 25000 },
-  { make: "Toyota", model: "Corolla", year: 2022, type: "Sedan", dailyRate: 40, acquisitionCost: 22000 },
-  { make: "Honda", model: "Civic", year: 2023, type: "Sedan", dailyRate: 48, acquisitionCost: 26000 },
-  { make: "Honda", model: "Civic", year: 2023, type: "Sedan", dailyRate: 48, acquisitionCost: 26000 },
-  { make: "Hyundai", model: "Elantra", year: 2023, type: "Sedan", dailyRate: 42, acquisitionCost: 23000 },
-  
+  { make: "Toyota", model: "Corolla", year: 2023, category: "Economy Cars" as const, type: "Sedan", dailyRate: 45, acquisitionCost: 25000 },
+  { make: "Toyota", model: "Corolla", year: 2023, category: "Economy Cars" as const, type: "Sedan", dailyRate: 45, acquisitionCost: 25000 },
+  { make: "Toyota", model: "Corolla", year: 2022, category: "Economy Cars" as const, type: "Sedan", dailyRate: 40, acquisitionCost: 22000 },
+  { make: "Honda", model: "Civic", year: 2023, category: "Economy Cars" as const, type: "Sedan", dailyRate: 48, acquisitionCost: 26000 },
+  { make: "Honda", model: "Civic", year: 2023, category: "Economy Cars" as const, type: "Sedan", dailyRate: 48, acquisitionCost: 26000 },
+  { make: "Hyundai", model: "Elantra", year: 2023, category: "Economy Cars" as const, type: "Sedan", dailyRate: 42, acquisitionCost: 23000 },
+
   // Mid-size SUVs (Popular rentals)
-  { make: "Toyota", model: "RAV4", year: 2023, type: "SUV", dailyRate: 65, acquisitionCost: 35000 },
-  { make: "Toyota", model: "RAV4", year: 2023, type: "SUV", dailyRate: 65, acquisitionCost: 35000 },
-  { make: "Toyota", model: "RAV4", year: 2022, type: "SUV", dailyRate: 60, acquisitionCost: 32000 },
-  { make: "Honda", model: "CR-V", year: 2023, type: "SUV", dailyRate: 62, acquisitionCost: 34000 },
-  { make: "Honda", model: "CR-V", year: 2023, type: "SUV", dailyRate: 62, acquisitionCost: 34000 },
-  { make: "Mazda", model: "CX-5", year: 2023, type: "SUV", dailyRate: 63, acquisitionCost: 33000 },
-  
+  { make: "Toyota", model: "RAV4", year: 2023, category: "Mid-size SUVs" as const, type: "SUV", dailyRate: 65, acquisitionCost: 35000 },
+  { make: "Toyota", model: "RAV4", year: 2023, category: "Mid-size SUVs" as const, type: "SUV", dailyRate: 65, acquisitionCost: 35000 },
+  { make: "Toyota", model: "RAV4", year: 2022, category: "Mid-size SUVs" as const, type: "SUV", dailyRate: 60, acquisitionCost: 32000 },
+  { make: "Honda", model: "CR-V", year: 2023, category: "Mid-size SUVs" as const, type: "SUV", dailyRate: 62, acquisitionCost: 34000 },
+  { make: "Honda", model: "CR-V", year: 2023, category: "Mid-size SUVs" as const, type: "SUV", dailyRate: 62, acquisitionCost: 34000 },
+  { make: "Mazda", model: "CX-5", year: 2023, category: "Mid-size SUVs" as const, type: "SUV", dailyRate: 63, acquisitionCost: 33000 },
+
   // Luxury Sedans
-  { make: "Tesla", model: "Model 3", year: 2023, type: "Sedan", dailyRate: 95, acquisitionCost: 45000 },
-  { make: "Tesla", model: "Model 3", year: 2023, type: "Sedan", dailyRate: 95, acquisitionCost: 45000 },
-  { make: "BMW", model: "3 Series", year: 2023, type: "Sedan", dailyRate: 110, acquisitionCost: 50000 },
-  { make: "Mercedes-Benz", model: "C-Class", year: 2023, type: "Sedan", dailyRate: 115, acquisitionCost: 52000 },
-  
+  { make: "Tesla", model: "Model 3", year: 2023, category: "Luxury Sedans" as const, type: "Sedan", dailyRate: 95, acquisitionCost: 45000 },
+  { make: "Tesla", model: "Model 3", year: 2023, category: "Luxury Sedans" as const, type: "Sedan", dailyRate: 95, acquisitionCost: 45000 },
+  { make: "BMW", model: "3 Series", year: 2023, category: "Luxury Sedans" as const, type: "Sedan", dailyRate: 110, acquisitionCost: 50000 },
+  { make: "Mercedes-Benz", model: "C-Class", year: 2023, category: "Luxury Sedans" as const, type: "Sedan", dailyRate: 115, acquisitionCost: 52000 },
+
   // Large SUVs
-  { make: "Chevrolet", model: "Tahoe", year: 2023, type: "SUV", dailyRate: 85, acquisitionCost: 55000 },
-  { make: "Ford", model: "Explorer", year: 2023, type: "SUV", dailyRate: 80, acquisitionCost: 50000 },
-  { make: "Toyota", model: "Highlander", year: 2023, type: "SUV", dailyRate: 78, acquisitionCost: 48000 },
-  
+  { make: "Chevrolet", model: "Tahoe", year: 2023, category: "Large SUVs" as const, type: "SUV", dailyRate: 85, acquisitionCost: 55000 },
+  { make: "Ford", model: "Explorer", year: 2023, category: "Large SUVs" as const, type: "SUV", dailyRate: 80, acquisitionCost: 50000 },
+  { make: "Toyota", model: "Highlander", year: 2023, category: "Large SUVs" as const, type: "SUV", dailyRate: 78, acquisitionCost: 48000 },
+
   // Trucks (Lower utilization but niche market)
-  { make: "Ford", model: "F-150", year: 2023, type: "Truck", dailyRate: 90, acquisitionCost: 50000 },
-  { make: "Chevrolet", model: "Silverado", year: 2023, type: "Truck", dailyRate: 88, acquisitionCost: 48000 },
+  { make: "Ford", model: "F-150", year: 2023, category: "Trucks" as const, type: "Truck", dailyRate: 90, acquisitionCost: 50000 },
+  { make: "Chevrolet", model: "Silverado", year: 2023, category: "Trucks" as const, type: "Truck", dailyRate: 88, acquisitionCost: 48000 },
 ]
 
 const customers = [
@@ -118,6 +118,7 @@ export const seedData = mutation({
         make: model.make,
         model: model.model,
         year: model.year,
+        category: model.category,
         licensePlate: generateLicensePlate(),
         vin: `VIN${getRandomInt(10000000, 99999999)}`,
         status: "available",

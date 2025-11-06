@@ -8,114 +8,6 @@ export const list = query({
   },
 });
 
-export const getById = query({
-  args: { vehicleId: v.id("vehicles") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.vehicleId);
-  },
-});
-
-export const updateLocation = mutation({
-  args: {
-    vehicleId: v.id("vehicles"),
-    latitude: v.number(),
-    longitude: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const timestamp = Date.now();
-    
-    // Update vehicle's current location
-    await ctx.db.patch(args.vehicleId, {
-      currentLatitude: args.latitude,
-      currentLongitude: args.longitude,
-      lastLocationUpdate: timestamp,
-    });
-
-    // Add to location history
-    await ctx.db.insert("vehicleLocationHistory", {
-      vehicleId: args.vehicleId,
-      latitude: args.latitude,
-      longitude: args.longitude,
-      timestamp,
-    });
-  },
-});
-
-export const updateOdometer = mutation({
-  args: {
-    vehicleId: v.id("vehicles"),
-    reading: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const timestamp = Date.now();
-    
-    // Update vehicle's current odometer
-    await ctx.db.patch(args.vehicleId, {
-      currentOdometer: args.reading,
-      lastOdometerUpdate: timestamp,
-    });
-
-    // Add to odometer history
-    await ctx.db.insert("vehicleOdometerHistory", {
-      vehicleId: args.vehicleId,
-      reading: args.reading,
-      timestamp,
-    });
-  },
-});
-
-export const updateStatus = mutation({
-  args: {
-    vehicleId: v.id("vehicles"),
-    status: v.union(
-      v.literal("available"),
-      v.literal("reserved"),
-      v.literal("in-use"),
-      v.literal("maintenance")
-    ),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.vehicleId, {
-      status: args.status,
-    });
-  },
-});
-
-export const getVehicleProfitability = query({
-  args: { vehicleId: v.id("vehicles") },
-  handler: async (ctx, args) => {
-    const vehicle = await ctx.db.get(args.vehicleId);
-    if (!vehicle) return null;
-
-    // Get all completed bookings for this vehicle
-    const bookings = await ctx.db
-      .query("bookings")
-      .withIndex("by_vehicle", (q) => q.eq("vehicleId", args.vehicleId))
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
-
-    // Get all maintenance costs for this vehicle
-    const maintenanceRecords = await ctx.db
-      .query("maintenance")
-      .withIndex("by_vehicle", (q) => q.eq("vehicleId", args.vehicleId))
-      .collect();
-
-    const totalRevenue = bookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
-    const totalMaintenanceCosts = maintenanceRecords.reduce((sum, record) => sum + record.cost, 0);
-    const netProfit = totalRevenue - vehicle.acquisitionCost - totalMaintenanceCosts;
-
-    return {
-      vehicle,
-      totalRevenue,
-      acquisitionCost: vehicle.acquisitionCost,
-      totalMaintenanceCosts,
-      netProfit,
-      bookingCount: bookings.length,
-      maintenanceCount: maintenanceRecords.length,
-    };
-  },
-});
-
 export const getVehicleDetails = query({
   args: { vehicleId: v.id("vehicles") },
   handler: async (ctx, args) => {
@@ -161,7 +53,7 @@ export const getVehicleDetails = query({
     // Get upcoming service alerts for this vehicle
     const now = Date.now();
     const thirtyDaysFromNow = now + (30 * 24 * 60 * 60 * 1000);
-    
+
     const upcomingServiceAlerts = allMaintenance.filter((record) => {
       if (record.nextServiceDue && record.nextServiceDue >= now && record.nextServiceDue <= thirtyDaysFromNow) {
         return true;
@@ -201,6 +93,72 @@ export const getVehicleDetails = query({
         totalMaintenanceRecords: allMaintenance.length,
         upcomingServiceAlerts,
       },
+    };
+  },
+});
+
+// Mutation to backfill category field on existing vehicles
+export const backfillVehicleCategories = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const vehicles = await ctx.db.query("vehicles").collect();
+
+    // Map make/model combinations to categories based on seed data patterns
+    const getCategoryForVehicle = (make: string, model: string, type?: string) => {
+      // Economy Cars
+      if ((make === "Toyota" && model === "Corolla") ||
+          (make === "Honda" && model === "Civic") ||
+          (make === "Hyundai" && model === "Elantra")) {
+        return "Economy Cars";
+      }
+
+      // Mid-size SUVs
+      if ((make === "Toyota" && model === "RAV4") ||
+          (make === "Honda" && model === "CR-V") ||
+          (make === "Mazda" && model === "CX-5")) {
+        return "Mid-size SUVs";
+      }
+
+      // Luxury Sedans
+      if ((make === "Tesla" && model === "Model 3") ||
+          (make === "BMW" && model === "3 Series") ||
+          (make === "Mercedes-Benz" && model === "C-Class")) {
+        return "Luxury Sedans";
+      }
+
+      // Large SUVs
+      if ((make === "Chevrolet" && model === "Tahoe") ||
+          (make === "Ford" && model === "Explorer") ||
+          (make === "Toyota" && model === "Highlander")) {
+        return "Large SUVs";
+      }
+
+      // Trucks
+      if ((make === "Ford" && model === "F-150") ||
+          (make === "Chevrolet" && model === "Silverado")) {
+        return "Trucks";
+      }
+
+      // Fallback: determine category based on type if available
+      if (type === "Truck") return "Trucks";
+      if (type === "SUV") return "Mid-size SUVs"; // Default SUVs to mid-size
+      return "Economy Cars"; // Default sedans to economy
+    };
+
+    let updated = 0;
+    for (const vehicle of vehicles) {
+      // Skip if category already exists
+      if ("category" in vehicle && vehicle.category) continue;
+
+      const category = getCategoryForVehicle(vehicle.make, vehicle.model);
+      await ctx.db.patch(vehicle._id, { category });
+      updated++;
+    }
+
+    return {
+      message: `Successfully backfilled ${updated} vehicle categories`,
+      totalVehicles: vehicles.length,
+      updated,
     };
   },
 });

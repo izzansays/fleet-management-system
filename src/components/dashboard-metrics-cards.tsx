@@ -39,7 +39,7 @@ export function DashboardMetricsCards({ className }: DashboardMetricsCardsProps)
                         title: 'Total Revenue',
                         value: isRevenueLoading ? 0 : totalRevenue.current,
                         trend: isRevenueLoading ? 0 : totalRevenue.trend,
-                        previousValue: isRevenueLoading ? 0 : totalRevenue.current,
+                        previousValue: isRevenueLoading ? 0 : totalRevenue.previous,
                     }}
                 />
 
@@ -55,23 +55,23 @@ export function DashboardMetricsCards({ className }: DashboardMetricsCardsProps)
                     }}
                 />
 
-                {/* Fleet Utilization */}
+                {/* Average Fleet Utilization */}
                 <StatisticCard
                     isLoading={isUtilizationLoading}
                     formatValue={(val) => `${val.toFixed(1)}%`}
                     data={{
-                        title: 'Fleet Utilization',
+                        title: 'Avg Fleet Utilization',
                         value: isUtilizationLoading ? 0 : fleetUtilization.current,
                         trend: isUtilizationLoading ? 0 : fleetUtilization.trend,
                         previousValue: isUtilizationLoading ? 0 : fleetUtilization.previous,
                     }}
                 />
 
-                {/* Active Bookings */}
+                {/* Completed Bookings */}
                 <StatisticCard
                     isLoading={isBookingsLoading}
                     data={{
-                        title: 'Active Bookings',
+                        title: 'Completed Bookings',
                         value: isBookingsLoading ? 0 : activeBookings.current,
                         trend: isBookingsLoading ? 0 : activeBookings.trend,
                         previousValue: isBookingsLoading ? 0 : activeBookings.previous,
